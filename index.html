@@ -1,0 +1,235 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kepadatan Penduduk Surakarta</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f1f2ee;color:#292e2b;font:14px Arial,sans-serif}
+header{background:#292e2b;color:white;padding:24px 6%;border-bottom:4px solid #e98242}
+header h1{margin:0;font-size:28px}
+header p{color:#d4d9d3;margin:8px 0 0}
+main{max-width:1050px;width:92%;margin:24px auto}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.card{background:white;border:1px solid #e0e4dd;border-radius:12px;padding:18px;margin-bottom:16px}
+.label{font-size:12px;color:#747b75}
+.number{font-size:26px;font-weight:bold;margin:8px 0}
+h2{font-size:18px;margin:0 0 14px}
+.controls{display:flex;gap:8px;margin-bottom:14px}
+button,input{font:inherit}
+button{cursor:pointer}
+.controls button{border:1px solid #ddd;background:white;padding:9px 13px;border-radius:8px}
+.controls button.active{background:#292e2b;color:white}
+.layout{display:grid;grid-template-columns:1.2fr .8fr;gap:14px}
+.heatmap{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.tile{min-height:105px;padding:12px;border:3px solid transparent;border-radius:9px;text-align:left;color:#292e2b}
+.tile:last-child{grid-column:span 2}
+.tile.selected{border-color:#292e2b}
+.tile strong,.tile span{display:block}
+.tile span{font-size:22px;font-weight:bold;margin-top:12px}
+.tile small{font-size:11px}
+.green{background:#c9d9c9}
+.cream{background:#ead2ad}
+.orange{background:#e98242;color:white}
+.legend{font-size:11px;color:#747b75;margin-top:12px}
+.detail{background:#f4f5f1;border-radius:8px;padding:12px;margin-top:12px}
+.detail strong{font-size:22px}
+.bar{margin:15px 0}
+.bar-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px}
+.track{height:10px;background:#edf0ea;border-radius:10px;overflow:hidden}
+.fill{height:100%;background:#e98242;border-radius:10px}
+input{padding:9px;border:1px solid #ddd;border-radius:8px;width:100%;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:11px 8px;border-bottom:1px solid #e3e6e0}
+th{color:#747b75;background:#f5f6f2}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:#f2f5ef}
+.tag{background:#e3eee3;color:#41664a;border-radius:12px;padding:4px 7px;font-size:11px}
+footer{text-align:center;padding:18px;color:#747b75;font-size:12px}
+a{color:#a95320}
+@media(max-width:650px){
+.stats{grid-template-columns:1fr}
+.layout{grid-template-columns:1fr}
+header h1{font-size:23px}
+.table-wrap{overflow-x:auto}
+table{min-width:520px}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Kepadatan Penduduk Surakarta</h1>
+  <p>Data per kecamatan · 2025</p>
+</header>
+
+<main>
+  <section class="stats">
+    <div class="card">
+      <div class="label">Jumlah penduduk</div>
+      <div class="number">529.079</div>
+      <div class="label">Jiwa</div>
+    </div>
+    <div class="card">
+      <div class="label">Kepadatan rata-rata</div>
+      <div class="number">11.324</div>
+      <div class="label">Jiwa/km²</div>
+    </div>
+    <div class="card">
+      <div class="label">Jumlah kecamatan</div>
+      <div class="number">5</div>
+      <div class="label">Kecamatan</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Heat map kecamatan</h2>
+    <div class="controls">
+      <button id="densityBtn" class="active">Kepadatan</button>
+      <button id="popBtn">Jumlah penduduk</button>
+    </div>
+    <div class="layout">
+      <div>
+        <div id="heatmap" class="heatmap"></div>
+        <div class="legend">Hijau = rendah · Krem = sedang · Oranye = tinggi</div>
+      </div>
+      <div>
+        <div class="label">Kecamatan terpilih</div>
+        <h2 id="selectedName">Pasar Kliwon</h2>
+        <div class="detail">
+          <div class="label">Jumlah penduduk</div>
+          <strong id="selectedPop">79.972</strong>
+        </div>
+        <div class="detail">
+          <div class="label">Kepadatan (jiwa/km²)</div>
+          <strong id="selectedDensity">16.388</strong>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Perbandingan</h2>
+    <div id="bars"></div>
+  </section>
+
+  <section class="card">
+    <h2>Data kecamatan</h2>
+    <input id="search" placeholder="Cari kecamatan...">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Kecamatan</th>
+            <th>Penduduk</th>
+            <th>Kepadatan/km²</th>
+            <th>Kategori</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Sumber</h2>
+    <p>BPS Kota Surakarta</p>
+    <a href="https://surakartakota.bps.go.id/" target="_blank">
+      Situs resmi BPS Surakarta
+    </a>
+  </section>
+</main>
+
+<footer>Kepadatan Penduduk Kota Surakarta</footer>
+
+<script>
+const data=[
+ {name:"Laweyan",pop:88978,density:9746},
+ {name:"Serengan",pop:48567,density:15769},
+ {name:"Pasar Kliwon",pop:79972,density:16388},
+ {name:"Jebres",pop:139321,density:9689},
+ {name:"Banjarsari",pop:172241,density:11287}
+];
+
+let metric="density";
+let selected="Pasar Kliwon";
+const fmt=n=>n.toLocaleString("id-ID");
+const val=d=>d[metric];
+const unit=()=>metric==="density"?"jiwa/km²":"jiwa";
+
+function color(d){
+ const v=d.density;
+ if(v>=15000)return "orange";
+ if(v>=11000)return "cream";
+ return "green";
+}
+
+function selectDistrict(name){
+ selected=name;
+ const d=data.find(x=>x.name===name);
+ document.getElementById("selectedName").textContent=d.name;
+ document.getElementById("selectedPop").textContent=fmt(d.pop);
+ document.getElementById("selectedDensity").textContent=fmt(d.density);
+ renderHeat();
+}
+
+function renderHeat(){
+ const max=Math.max(...data.map(val));
+ const min=Math.min(...data.map(val));
+ document.getElementById("heatmap").innerHTML=data.map(d=>{
+   const shade=metric==="density"?color(d):
+     (d.pop/max>.7?"orange":d.pop/max>.4?"cream":"green");
+   return `<button class="tile ${shade} ${selected===d.name?"selected":""}"
+     onclick="selectDistrict('${d.name}')">
+     <strong>${d.name}</strong>
+     <span>${fmt(val(d))}</span>
+     <small>${unit()}</small>
+   </button>`;
+ }).join("");
+}
+
+function renderBars(){
+ const sorted=[...data].sort((a,b)=>val(b)-val(a));
+ const max=val(sorted[0]);
+ document.getElementById("bars").innerHTML=sorted.map(d=>`
+   <div class="bar">
+     <div class="bar-label"><strong>${d.name}</strong>
+     <span>${fmt(val(d))}</span></div>
+     <div class="track"><div class="fill"
+       style="width:${val(d)/max*100}%"></div></div>
+   </div>`).join("");
+}
+
+function renderTable(){
+ const q=document.getElementById("search").value.toLowerCase();
+ document.getElementById("rows").innerHTML=data
+ .filter(d=>d.name.toLowerCase().includes(q))
+ .map(d=>`<tr onclick="selectDistrict('${d.name}')">
+   <td>${d.name}</td><td>${fmt(d.pop)}</td>
+   <td>${fmt(d.density)}</td>
+   <td><span class="tag">${
+     d.density>=15000?"Tinggi":
+     d.density>=11000?"Sedang":"Rendah"
+   }</span></td></tr>`).join("");
+}
+
+function setMetric(m){
+ metric=m;
+ document.getElementById("densityBtn").classList.toggle("active",m==="density");
+ document.getElementById("popBtn").classList.toggle("active",m==="pop");
+ renderHeat();
+ renderBars();
+}
+
+document.getElementById("densityBtn").onclick=()=>setMetric("density");
+document.getElementById("popBtn").onclick=()=>setMetric("pop");
+document.getElementById("search").oninput=renderTable;
+
+renderHeat();
+renderBars();
+renderTable();
+selectDistrict(selected);
+</script>
+</body>
+</html>
